@@ -14,6 +14,7 @@
 <meta property="og:description" content="Unauthenticated remote code execution in PHP core through the session upload-progress handler. One URL in, a reverse shell out.">
 <meta property="og:url" content="https://whackermelon.github.io/Php2Shell-POC/">
 <meta property="og:image" content="https://raw.githubusercontent.com/Whackermelon/Php2Shell-POC/main/.github/assets/preview.png">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/Whackermelon/Php2Shell-POC/main/images.jpeg">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="php2shell — CVE-2026-109618 / CVE-2026-109619">
 <meta name="twitter:description" content="Pre-auth RCE &amp; reverse shell PoC for the two critical PHP core vulnerabilities.">
@@ -58,14 +59,14 @@
   .card p{margin:0;color:var(--muted);font-size:.92rem}
   footer{margin-top:52px;padding-top:20px;border-top:1px solid var(--line);color:var(--muted);font-size:.87rem}
   .warn{border-left:3px solid var(--yellow);background:rgba(242,214,75,.07);padding:11px 15px;margin:16px 0;border-radius:0 8px 8px 0}
-  .melon{font-size:2.4rem;line-height:1;margin-bottom:12px}
+  .melon{display:block;margin-bottom:14px}
 </style>
 </head>
 <body>
 <div class="wrap">
 
 <header>
-  <div class="melon">🍉</div>
+  <img class="melon" src="https://raw.githubusercontent.com/Whackermelon/Php2Shell-POC/main/images.jpeg" alt="watermelon" width="150">
   <h1><span class="g">php</span><span class="r">2shell</span></h1>
   <p class="sub">Pre-auth remote code execution &amp; reverse shell for the two critical PHP core
      vulnerabilities patched on 2026-10-21.</p>

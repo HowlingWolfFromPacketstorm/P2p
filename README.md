@@ -21,6 +21,10 @@
 [![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20Windows%20%7C%20macOS-lightgrey?style=flat-square)](#requirements)
 
 <p align="center">
+  <img src="images.jpeg" alt="php2shell" width="140">
+</p>
+
+<p align="center">
   <img src=".github/assets/preview.png" alt="php2shell — CVE-2026-109618 / CVE-2026-109619" width="100%">
 </p>
 
@@ -475,6 +479,19 @@ https://github.com/topics/php2shell
 Report a problem, request a feature, or ask a question on the
 [issue tracker](https://github.com/Whackermelon/Php2Shell-POC/issues) or in
 [discussions](https://github.com/Whackermelon/Php2Shell-POC/discussions).
+
+---
+
+## 🎨 Artwork
+
+| | |
+|---|---|
+| ![watermelon](images.jpeg) | The project mascot, also used as the repository avatar |
+| ![preview](.github/assets/preview.png) | The 1280×640 social preview, regenerated with `python3 .github/make_preview.py` |
+
+The terminal banner is plain ASCII so it renders in any terminal, and the
+same artwork is embedded in `php2shell.py` — the PoC stays a single
+self-contained file.
 
 ---
 
