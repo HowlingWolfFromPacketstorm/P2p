@@ -59,6 +59,8 @@
 - [Detection](#-detection)
 - [Mitigation](#-mitigation)
 - [Credits](#-credits)
+- [Find it](#-find-it)
+- [Terminal banner](#-terminal-banner)
 
 ---
 
@@ -286,7 +288,7 @@ On the listener side:
 ```console
 $ nc -lvnp 4444
 bash: impossible de régler le groupe de processus du terminal: Ioctl() inapproprié
-adam@adam:/var/www/html$
+www-data@web:/var/www/html$
 ```
 
 ### Explicit sink and session path
@@ -506,15 +508,11 @@ Report a problem, request a feature, or ask a question on the
 
 ---
 
-## 🎨 Artwork
+## 🖥️ Terminal banner
 
-![preview](.github/assets/social-preview.png)
-
-The 1280×640 social preview, regenerated from the project artwork with
-`python3 .github/make_preview.py <artwork.png>`.
-
-The terminal banner printed by the PoC is plain ASCII, so it renders in any
-terminal, and the whole PoC stays a single self-contained file.
+The PoC prints an ASCII banner on start-up, so it renders in any terminal,
+and it stays a single self-contained file: no dependency, no build step,
+nothing to install next to it.
 
 ---
 
