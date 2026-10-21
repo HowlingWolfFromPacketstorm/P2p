@@ -29,7 +29,11 @@
 </p>
 
 <p align="center">
-  <a href="https://whackermelon.github.io/Php2Shell-POC/">🌐 Read the write-up on the web</a>
+  <a href="https://whackermelon.com/projets/php2shell-poc/">✍️ Read the full write-up</a>
+  &nbsp;·&nbsp;
+  <a href="https://whackermelon.github.io/Php2Shell-POC/">🌐 Landing page</a>
+  &nbsp;·&nbsp;
+  <a href="https://github.com/openai/php2shell-checker">🩺 Check if a target is vulnerable</a>
   &nbsp;·&nbsp;
   <a href="https://github.com/Whackermelon/Php2Shell-POC/issues">🐛 Report an issue</a>
   &nbsp;·&nbsp;
