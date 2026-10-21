@@ -1,0 +1,25 @@
+cff-version: 1.2.0
+title: "php2shell — Pre-auth RCE & reverse shell PoC for CVE-2026-109618 / CVE-2026-109619"
+message: "If you use this PoC in your research, please cite it as below."
+type: software
+authors:
+  - given-names: "Whackermelon"
+    alias: "Whackermelon"
+repository-code: "https://github.com/Whackermelon/Php2Shell-POC"
+url: "https://github.com/Whackermelon/Php2Shell-POC"
+abstract: >-
+  Proof-of-concept exploit demonstrating unauthenticated remote code
+  execution against PHP core through the session upload-progress handler
+  (CVE-2026-109618 OOM corruption chained with CVE-2026-109619 stale
+  global state). Takes a single URL and yields a reverse shell.
+keywords:
+  - CVE-2026-109618
+  - CVE-2026-109619
+  - php
+  - remote-code-execution
+  - reverse-shell
+  - proof-of-concept
+  - vulnerability-research
+license: MIT
+version: 1.0.0
+date-released: "2026-10-21"

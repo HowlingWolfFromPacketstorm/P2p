@@ -1,0 +1,11 @@
+name: Feature request
+description: Suggest an improvement to the PoC
+title: "[feature] "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like to see?
+    validations:
+      required: true

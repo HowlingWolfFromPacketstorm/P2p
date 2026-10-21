@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: PHP security advisory
+    url: https://www.php.net/archive/2026.php
+    about: The official advisory for CVE-2026-109618 / CVE-2026-109619

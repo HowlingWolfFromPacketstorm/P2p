@@ -1,0 +1,49 @@
+name: Bug report
+description: The PoC does not behave as expected on a target
+title: "[bug] "
+labels: ["bug", "needs triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. This tool is for **authorised security
+        testing only** — please confirm you have written permission for
+        the target before we troubleshoot a PoC against it.
+  - type: input
+    id: version
+    attributes:
+      label: PoC version
+      placeholder: "git describe --tags"
+    validations:
+      required: true
+  - type: input
+    id: target
+    attributes:
+      label: Target PHP version and SAPI
+      description: "php -v on the target, and the SAPI (mod_php / FPM / CGI)"
+      placeholder: "PHP 8.4.24 / Apache 2.4.68 mod_php"
+    validations:
+      required: true
+  - type: textarea
+    id: ini
+    attributes:
+      label: Relevant php.ini settings
+      description: "session.upload_progress.enabled, session.upload_progress.cleanup, session.serialize_handler, session.save_path, disable_functions"
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: PoC output
+      description: "Full output of `python3 php2shell.py <URL> -c id -v`"
+      render: shell
+    validations:
+      required: true
+  - type: checkboxes
+    id: authorisation
+    attributes:
+      label: Authorisation
+      options:
+        - label: I have written permission to test this target.
+          required: true
