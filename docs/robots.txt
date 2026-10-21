@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://whackermelon.github.io/Php2Shell-POC/sitemap.xml
