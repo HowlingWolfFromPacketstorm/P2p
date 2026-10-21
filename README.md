@@ -5,7 +5,6 @@
 > PHP 8.5.12 / 8.4.27 / 8.3.36 / 8.2.35.
 
 [![Php2Shell-POC](https://img.shields.io/badge/repo-php2shell--poc-34a853?style=for-the-badge&logo=github)](https://github.com/Whackermelon/Php2Shell-POC)
-[![CI](https://github.com/Whackermelon/Php2Shell-POC/actions/workflows/ci.yml/badge.svg)](https://github.com/Whackermelon/Php2Shell-POC/actions/workflows/ci.yml)
 [![Stars](https://img.shields.io/github/stars/Whackermelon/Php2Shell-POC?style=social)](https://github.com/Whackermelon/Php2Shell-POC/stargazers)
 [![Forks](https://img.shields.io/github/forks/Whackermelon/Php2Shell-POC?style=social)](https://github.com/Whackermelon/Php2Shell-POC/network/members)
 [![Issues](https://img.shields.io/github/issues/Whackermelon/Php2Shell-POC?style=social)](https://github.com/Whackermelon/Php2Shell-POC/issues)
@@ -21,7 +20,7 @@
 [![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20Windows%20%7C%20macOS-lightgrey?style=flat-square)](#requirements)
 
 <p align="center">
-  <img src=".github/assets/preview.png" alt="php2shell — CVE-2026-109618 / CVE-2026-109619" width="100%">
+  <img src=".github/assets/social-preview.png" alt="php2shell — CVE-2026-109618 / CVE-2026-109619" width="100%">
 </p>
 
 <p align="center">
@@ -480,7 +479,7 @@ Report a problem, request a feature, or ask a question on the
 
 ## 🎨 Artwork
 
-![preview](.github/assets/preview.png)
+![preview](.github/assets/social-preview.png)
 
 The 1280×640 social preview, regenerated from the project artwork with
 `python3 .github/make_preview.py <artwork.png>`.
