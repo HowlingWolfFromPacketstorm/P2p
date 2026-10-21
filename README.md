@@ -50,6 +50,7 @@
 - [Command-line options](#-command-line-options)
 - [Examples](#-examples)
 - [Requirements](#-requirements)
+- [Checking a target first](#-checking-a-target-first)
 - [Troubleshooting](#-troubleshooting)
 - [Detection](#-detection)
 - [Mitigation](#-mitigation)
@@ -453,6 +454,30 @@ disable_functions = exec,passthru,shell_exec,system,proc_open,popen
 - [PHP multipart parser](https://github.com/php/php-src/blob/PHP-8.4/main/rfc1867.c)
 - The researchers who published their chains in the open, including
   `eness`, `9bie`, `ikow`, `iQingshan`, `dinosn` and `19h`
+
+---
+
+## 🩺 Checking a target first
+
+Before running the PoC, check whether the target actually serves a
+vulnerable PHP. The [OpenAI php2shell-checker](https://github.com/openai/php2shell-checker)
+does exactly that:
+
+```bash
+npx phpcheck.js https://target.example.com
+# or, against a local binary
+npx phpcheck.js --local
+```
+
+| Result | Meaning |
+|---|---|
+| `VULNERABLE` | the PHP version is at or below the patched version of its branch — go on |
+| `OK` | the PHP version is patched — this chain will not work |
+| `UNKNOWN` | the version could not be determined (no `X-Powered-By`, no `php -v`) |
+
+The checker only looks at the version, so it says nothing about the
+`session.upload_progress` configuration: the PoC itself reports that part
+(`session fixation accepted by the target`, `no include() sink detected`, …).
 
 ---
 
