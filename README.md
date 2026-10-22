@@ -29,6 +29,12 @@
 </p>
 
 <p align="center">
+  <b>Two independent bugs, two PoCs.</b><br>
+  <code>php2shell.py</code> drives <b>CVE-2026-109619</b> (session upload-progress).<br>
+  <code>php2shell_raw.py</code> drives <b>CVE-2026-109618</b> (heap corruption / ASLR bypass).
+</p>
+
+<p align="center">
   <a href="https://whackermelon.com/projets/php2shell-poc/">✍️ Read the full write-up</a>
   &nbsp;·&nbsp;
   <a href="https://whackermelon.github.io/Php2Shell-POC/">🌐 Landing page</a>
@@ -51,6 +57,7 @@
 - [The vulnerabilities](#-the-vulnerabilities)
 - [How it works](#-how-it-works)
 - [Strategies](#-strategies)
+- [The rawkey PoC (CVE-2026-109618)](#-the-rawkey-poc-cve-2026-109618)
 - [Command-line options](#-command-line-options)
 - [Examples](#-examples)
 - [Requirements](#-requirements)
@@ -114,12 +121,24 @@ be exploited (no PHP endpoint, no session fixation, or no inclusion sink).
 
 ## 🧬 The vulnerabilities
 
+The two CVEs shipped in the same emergency release but they are **two
+independent bug families with different attack surfaces**. Each one has its
+own PoC in this repository.
+
+| | **CVE-2026-109619** — *php2shell* | **CVE-2026-109618** — *rawkey* |
+|---|---|---|
+| PoC | `php2shell.py` | `php2shell_raw.py` |
+| Surface | `session.upload_progress` callback, `ext/session/session.c` | Zend Engine `HashTable`, during `$_POST` parsing |
+| Trigger | multipart POST, ~450 bytes | urlencoded POST, one oversized field name (> 1 MB) |
+| Primitive | attacker writes PHP into their own session file, then an `include()` sink runs it | out-of-memory bailout leaves a dangling pointer, reused as a fake `HashTable` whose `pDestructor` is `zif_system` |
+| Needs | a PHP session **on disk** and an inclusion sink | `display_errors=1`, a small `memory_limit`, single-worker prefork |
+| WAF signature | a `PHPSESSID` form field | a field name >= 1000 bytes |
+| Mitigation | `session.upload_progress.enabled = 0` | `memory_limit = -1` |
+
+### CVE-2026-109619 — *php2shell* (session upload-progress)
+
 From the official PHP security advisory:
 
-> **CVE-2026-109618** — RCE via OOM corruption. An out-of-memory
-> condition can interrupt PHP while internal request data is only partially
-> initialised. Request cleanup may then treat the invalid data as valid.
->
 > **CVE-2026-109619** — RCE via stale global state. Request-owned internal
 > state can survive after its backing memory has been freed. A later request
 > handled by the same worker may use that stale state before normal
@@ -145,6 +164,31 @@ controls the **content** of a file whose name is **fully predictable**:
 ```
 <session.save_path>/sess_<chosen session id>
 ```
+
+> **Note.** This chain needs the session to be **stored on disk**. When
+> `session.save_handler` is `redis` (or any other non-`files` handler), there
+> is no session file to poison and the chain cannot work — that is a
+> configuration check, not a limitation of the PoC.
+
+### CVE-2026-109618 — *rawkey* (heap corruption)
+
+From the official PHP security advisory:
+
+> **CVE-2026-109618** — RCE via OOM corruption. An out-of-memory
+> condition can interrupt PHP while internal request data is only partially
+> initialised. Request cleanup may then treat the invalid data as valid.
+
+This one does **not** touch `session.upload_progress`. An oversized
+urlencoded field name exhausts the request allocator while `$_POST` is being
+parsed, the bailout leaves a dangling `PS(http_session_vars)` in the worker,
+and the next request that initialises the session walks that freed memory.
+A forged `HashTable` is then read back with `pDestructor` pointing at
+`zif_system`, so the command runs inside libphp and libc is never needed.
+
+`php2shell_raw.py` implements the whole chain: worker rotation, the heap
+leak that yields the Zend MM chunk base, the second leak that yields the
+libphp base, then the fake `HashTable` that executes the command. See
+[🧬 The rawkey PoC](#-the-rawkey-poc-cve-2026-109618) below.
 
 ---
 
@@ -229,6 +273,94 @@ Needs:
 
 - two reachable directories with different `session.serialize_handler`
 - a class with a useful `__destruct` that is autoloadable on the target
+
+---
+
+## 🧬 The rawkey PoC (CVE-2026-109618)
+
+`php2shell_raw.py` is a **second, independent** PoC. It does not use
+`session.upload_progress`, does not need an inclusion sink, does not need
+a session on disk, and does not need `session_start()` on the target page:
+the whole chain is plain HTTP against any PHP endpoint.
+
+```bash
+# one command: worker rotation, both leaks, then the command execution
+python3 php2shell_raw.py -u http://127.0.0.1:8099/index.php \
+    --libphp /path/to/libphp.so -c 'id' --proof-file /tmp/proof
+```
+
+```
+[*] target http://127.0.0.1:8099/index.php  (cmd='id')
+[*] offsets: zif=0x43a870 dtor=0x613c50 htdata=0x6e0d8 huge=12M
+[*] stage 1/3 heap leak
+[+] Zend MM chunk base = 0x7f4498a00000
+[*] stage 2/3 libphp leak
+[+] libphp base = 0x7f4498900000
+[*] stage 3/3 execution  HTDATA=0x7f44990e0d8  ZIF=0x7f4498d3a870
+[+] stage 3 attempt 1 confirmed
+PROOF: uid=33(www-data) gid=33(www-data) groups=33(www-data)
+```
+
+### How it works
+
+| Stage | What happens |
+|---|---|
+| 0 — worker rotation | A request whose last field is 12 MB OOMs inside `php_session_initialize()`. The Apache child dies with `SIGABRT`; prefork forks a fresh child that **inherits the same libphp and Zend MM chunk mappings**. |
+| 1 — heap leak | A uses 1001 fields to trip the `max_input_vars` warning (`display_errors=On` ⇒ `headers_sent=1`) and a `PHPSESSID` field of `\x00` to make PHP mint a new session id with `send_cookie=1`. The oversized field then OOMs, leaving `PS(http_session_vars)` and `PS(id)` **dangling**. B re-allocates the freed reference with a 56-byte multipart value and carries a forged 192-byte `zend_string`; the out-of-bounds read in `php_url_encode()` spills **Zend MM chunk pointers into `Set-Cookie`** (4096 bytes, 98 pointers). |
+| 2 — libphp leak | A parks the dangling `PS(id)` at `chunk+0xb7400`. B's 56-byte HashTable page makes `ZSTR_LEN(PS(id))` read `nTableSize=16`, so the data area starts exactly on `nNextFreeElement\|pDestructor` — and `pDestructor == ZVAL_PTR_DTOR` gives the **libphp base**. |
+| 3 — execution | A pins the dangling reference at `R0 = chunk+0x24e0` with six padding fields. B overwrites `R0-0x10` with a 55-byte raw buffer holding a fake `zend_reference` whose value is a fake `HashTable` stored in a live 167-byte string, with `pDestructor = zif_system`. The next request that initialises the session walks the corrupted heap: `zval_ptr_dtor(PS(http_session_vars))` → `zend_reference_destroy(R0)` → `zend_array_destroy(fake HT)` → `zend_hash_destroy(fake HT)` → `pDestructor(&bucket->val)` → **`zif_system`**. |
+
+Only `zif_system` is used, so **libc never enters the picture** and the
+command runs with the web server's own privileges.
+
+### Requirements on the target
+
+| Setting | Value | Why |
+|---|---|---|
+| `display_errors` | `On` | the OOM path and the out-of-bounds read must reach the response |
+| `memory_limit` | small (8 MB in the lab) | the oversized field name has to exhaust it |
+| `post_max_size` | > the field size | the body must be parsed at all |
+| `max_input_vars` | `1000` | the 1001st field is what trips the warning |
+| `session.use_cookies` | `On` | |
+| `session.use_strict_mode` | `0` | |
+| `session.upload_progress.enabled` | `On` | |
+| Apache | prefork, **one worker** | the corrupted heap must survive in the forked child |
+
+The official mitigations for this family are `memory_limit = -1` and, on
+PHP 8.5, `fatal_error_backtraces = 0`.
+
+### Offsets are build-specific
+
+`zif_system` and `ZVAL_PTR_DTOR` are read from the target's own
+`libphp.so`:
+
+```bash
+python3 php2shell_raw.py -u http://target/index.php --libphp ./libphp.so ...
+```
+
+If the library is **stripped**, `zif_system` is a local symbol and cannot be
+read: pass the offsets explicitly (`--zif-offset`, `--dtor-offset`) or
+sweep for them (`--sweep-zif 0x251000:0x252000:0x10`). The
+chunk-relative offset (`--htdata-offset`) depends on the exact PHP build
+and the request shape; the reference value is the one of the lab below.
+
+### 🧪 The lab
+
+A reproducible target ships in [`lab/`](lab/):
+
+```bash
+cd lab
+docker compose up -d
+python3 ../php2shell_raw.py -u http://127.0.0.1:8099/index.php \
+    --libphp /usr/lib/apache2/modules/libphp.so \
+    -c 'id>/out/proof' --proof-file out/proof
+```
+
+`lab/php.ini` and `lab/apache.conf` hold the exact configuration above
+(single prefork worker, `memory_limit=8M`, `display_errors=On`).
+
+> The offsets of a *different* PHP build differ; read them from that
+> build's `libphp.so` rather than reusing the numbers above.
 
 ---
 

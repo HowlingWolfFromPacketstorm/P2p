@@ -13,3 +13,10 @@ venv/
 *.resp
 body-*.bin
 poc*.log
+
+# local credentials - never commit
+creds
+creds*
+*.creds
+lab/out/*
+!lab/out/.gitkeep
